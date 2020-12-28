@@ -1,0 +1,58 @@
+version: '3.3'
+services:
+  zammad-backup:
+    container_name: Zammad-Backup
+
+  zammad-elasticsearch:
+    container_name: Zammad-ElasticSearch
+
+  zammad-init:
+    container_name: Zammad-Init
+
+  zammad-memcached:
+    container_name: Zammad-MemCached
+
+  zammad-postgresql:
+    container_name: Zammad-PostgreSQL
+
+  zammad-railsserver:
+    container_name: Zammad-RailsServer
+
+  zammad-scheduler:
+    container_name: Zammad-Scheduler
+
+  zammad-websocket:
+    container_name: Zammad-WebSocket
+
+  zammad-nginx:
+    container_name: Zammad-NGINX
+    ports:
+      - "88:80"
+
+    networks:
+      - traefik_proxy
+      - default
+
+    labels:
+      traefik.enable: true
+
+      # Routers
+      traefik.http.routers.zammad-nginx.rule: Host(`service.domain.example`) || Host(`service.domain2.example`)
+      traefik.http.routers.zammad-nginx.entrypoints: websecure
+      traefik.http.routers.zammad-nginx.tls.certresolver: myresolver
+      traefik.http.routers.zammad-nginx.service: zammad_svc
+      traefik.http.routers.zammad-nginx.middlewares: zammadHeader
+
+      traefik.http.services.zammad_svc.loadBalancer.server.port: 80
+      traefik.http.middlewares.zammadHeader.headers.customrequestheaders.X-Forwarded-Proto: https
+      traefik.http.middlewares.zammadHeader.headers.customrequestheaders.X-Forwarded-Ssl: on
+      traefik.http.middlewares.zammadHeader.headers.customrequestheaders.X-Forwarded-Port: 443
+
+      traefik.docker.network: traefik_proxy
+
+networks:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
+  default:
+    driver: bridge
